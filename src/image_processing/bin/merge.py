@@ -56,8 +56,8 @@ def main(**kwargs):
 
     homographies = [np.eye(3)]
     for (idx, match) in enumerate(matches):
-        src_pts = np.float32([keypoints[0][m.queryIdx].pt for m in match]).reshape((-1, 1, 2))
-        dst_pts = np.float32([keypoints[idx + 1][m.trainIdx].pt for m in match]).reshape((-1, 1, 2))
+        dst_pts = np.float32([keypoints[0][m.queryIdx].pt for m in match]).reshape((-1, 1, 2))
+        src_pts = np.float32([keypoints[idx + 1][m.trainIdx].pt for m in match]).reshape((-1, 1, 2))
         homography, _ = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC, 5.0)
         homographies.append(homography)
 
@@ -83,16 +83,17 @@ if __name__ == "__main__":
     #     os.path.join(paths.INPUT_FOLDER, "Zermatt_20200622-07.tif"),
     #     os.path.join(paths.INPUT_FOLDER, "Zermatt_20200622-08.tif"),
     #     os.path.join(paths.INPUT_FOLDER, "Zermatt_20200622-09.tif"),
-    #     # os.path.join(paths.INPUT_FOLDER, "Zermatt_20200622-10.tif"),
-    #     # os.path.join(paths.INPUT_FOLDER, "Zermatt_20200622-11.tif"),
-    #     # os.path.join(paths.INPUT_FOLDER, "Zermatt_20200622-12.tif"),
+    #     os.path.join(paths.INPUT_FOLDER, "Zermatt_20200622-10.tif"),
+    #     os.path.join(paths.INPUT_FOLDER, "Zermatt_20200622-11.tif"),
+    #     os.path.join(paths.INPUT_FOLDER, "Zermatt_20200622-12.tif"),
     #     os.path.join(paths.INPUT_FOLDER, "Zermatt_20200622-13.tif"),
     #     os.path.join(paths.INPUT_FOLDER, "Zermatt_20200622-14.tif"),
-    #     #os.path.join(paths.INPUT_FOLDER, "Zermatt_20200622-15.tif"),
+    #     os.path.join(paths.INPUT_FOLDER, "Zermatt_20200622-15.tif"),
     #     os.path.join(paths.INPUT_FOLDER, "Zermatt_20200622-16.tif"),
     #     os.path.join(paths.INPUT_FOLDER, "Zermatt_20200622-17.tif"),
     #     os.path.join(paths.INPUT_FOLDER, "Zermatt_20200622-18.tif"),
     #     os.path.join(paths.INPUT_FOLDER, "Zermatt_20200622-19.tif"),
     #     "--preview",
+    #     "--show-result",
     # ]
     sys.exit(main(**parse_command_line_args(arguments)))
