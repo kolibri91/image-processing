@@ -14,7 +14,7 @@ from matplotlib import pyplot as plt
 def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("files", nargs="*", help="Files to process")
-    parser.add_argument("--out", action="store_true", help="Path for result image")
+    parser.add_argument("--out", help="Path for result image")
     parser.add_argument("--preview", action="store_true", help="Process 4x downsamples image")
     parser.add_argument("--show-matches", action="store_true", help="Show matches")
     parser.add_argument("--show-result", action="store_true", help="Show result")
