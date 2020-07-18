@@ -94,12 +94,13 @@ def main(**kwargs):
 
    
    # initialize the image pyramid
-    pyramid = image_pyramid(image_8bit, scale=PYRAMID_SCALE, minSize=ROI_SIZE)
+    pyramid = image_pyramid(image_8bit, scale=PYRAMID_SCALE, min_size=ROI_SIZE)
     # initialize two lists, one to hold the ROIs generated from the image
     # pyramid and sliding window, and another list used to store the
     # (x, y)-coordinates of where the ROI was in the original image
     rois = []
     locs = []
+    objects = []
    
     cnt = 0
     
@@ -121,22 +122,52 @@ def main(**kwargs):
             # the region using Keras/TensorFlow
             roi = cv2.resize(roiOrig, INPUT_SIZE)
             
-            print("ROI: {} = {}".format(cnt,roi))
-            
-            #roi = img_to_array(roi)
-            
-            plt.imshow(roi[..., ::-1])
-            plt.show()
     
             #roi = preprocess_input(roi)
             # update our list of ROIs and associated coordinates
             rois.append(roi)
             locs.append((x, y, x + w, y + h))   
             
+
+            # clone the original image and then draw a bounding box
+            # surrounding the current region
+            clone = image_8bit.copy()
+            cv2.rectangle(clone, (x, y), (x + w, y + h),
+                    (0, 255, 0), 8)
+            
+            objects_detected = object_detector.process_frame(roiOrig)
+            (object_class_ids, object_confidences, object_boxes) = object_detector.postprocess_frame(roiOrig, objects_detected)
+
+            for (class_id, confidence, box) in zip(object_class_ids, object_confidences, object_boxes):
+                if object_detector.label(class_id) in ('person','backpack'):
+                    left = int(float(box[0]) * scale)
+                    top  = int(float(box[1]) * scale)
+                    right = int(float(box[2]) * scale)
+                    bottom = int(float(box[3]) * scale)
+                    objects.append(((x+left,y+top),(x+right,y+bottom),class_id, confidence))
+
+            # show the visualization and current ROI
+            #clone_resized = imutils.resize(clone, width=1024)
+            #cv2.imshow("Visualization", clone_resized)
+            ##cv2.imshow("ROI", roiOrig)
+            #cv2.waitKey(1)
+
+            #print("ROI: {} roi: {}".format(roiOrig.shape,roi.shape))
+            
             cnt += 1
    
     print("#ROIs = {}".format(len(rois)))
    
+    result = image_8bit.copy()
+    for o in objects:
+        cv2.rectangle(result, o[0], o[1], (255,178,50),8)
+        print("Object: {} Confidence: {} Box: ({})-({})".format(o[2],o[3],o[0],o[1]))
+    
+    cv2.imwrite("test.jpg", result)
+    #result_resized = imutils.resize(result, width=1024)
+    #cv2.imshow("Visualization", result_resized)
+    #cv2.waitKey(0)
+            
     ## detect people mirrored in lake
     #image_8bit = cv2.flip(image_8bit, 0)
     #img_part = image_8bit[1730:1730+500, 5340:5340+500].copy()
@@ -147,10 +178,10 @@ def main(**kwargs):
     ## detect people at lake (including the guy behind the hill)
     #image_8bit = cv2.flip(image_8bit, 0)
     #img_part = image_8bit[1840:1840+500, 5340:5340+500].copy()
-    img_part = image_8bit[1620:1840+1232, 5340:5340+1232].copy()
-    img_part_detected = process_frame(object_detector, img_part)
-    plt.imshow(img_part_detected[..., ::-1])
-    plt.show()
+    #img_part = image_8bit[1620:1840+1232, 5340:5340+1232].copy()
+    #img_part_detected = process_frame(object_detector, img_part)
+    #plt.imshow(img_part_detected[..., ::-1])
+    #plt.show()
     
     ## detect guy on the right border of image
     #img_part = image_8bit[1600:1600+500, 5600:5600+500].copy()
