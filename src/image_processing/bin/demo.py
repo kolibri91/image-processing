@@ -1,3 +1,5 @@
+# Example usage: 
+# src/image_processing/bin/demo.py --input ../images/Zermatt_20200623-87.tif --output ../images/xxx.tif -y ../yolo-coco/
 import argparse
 import os
 import sys
@@ -111,7 +113,7 @@ def main(**kwargs):
         scale = W / float(image.shape[1])
         # for each layer of the image pyramid, loop over the sliding
         # window locations
-        for (x, y, roiOrig) in sliding_window(image, WIN_STEP, ROI_SIZE):
+        for (x, y, roi_orig) in sliding_window(image, WIN_STEP, ROI_SIZE):
             # scale the (x, y)-coordinates of the ROI with respect to the
             # *original* image dimensions
             x = int(x * scale)
@@ -120,7 +122,7 @@ def main(**kwargs):
             h = int(ROI_SIZE[1] * scale)
             # take the ROI and preprocess it so we can later classify
             # the region using Keras/TensorFlow
-            roi = cv2.resize(roiOrig, INPUT_SIZE)
+            roi = cv2.resize(roi_orig, INPUT_SIZE)
             
     
             #roi = preprocess_input(roi)
@@ -131,12 +133,15 @@ def main(**kwargs):
 
             # clone the original image and then draw a bounding box
             # surrounding the current region
-            clone = image_8bit.copy()
-            cv2.rectangle(clone, (x, y), (x + w, y + h),
-                    (0, 255, 0), 8)
+            #clone = image_8bit.copy()
+            #cv2.rectangle(clone, (x, y), (x + w, y + h),
+            #        (0, 255, 0), 8)
             
-            objects_detected = object_detector.process_frame(roiOrig)
-            (object_class_ids, object_confidences, object_boxes) = object_detector.postprocess_frame(roiOrig, objects_detected)
+            check_for_mirrors = False
+            
+            objects_detected = object_detector.process_frame(roi_orig)
+
+            (object_class_ids, object_confidences, object_boxes) = object_detector.postprocess_frame(roi_orig, objects_detected)
 
             for (class_id, confidence, box) in zip(object_class_ids, object_confidences, object_boxes):
                 if object_detector.label(class_id) in ('person','backpack'):
@@ -145,7 +150,28 @@ def main(**kwargs):
                     right = int(float(box[2]) * scale)
                     bottom = int(float(box[3]) * scale)
                     objects.append(((x+left,y+top),(x+right,y+bottom),class_id, confidence))
+                    check_for_mirrors = True
+                    
+            if check_for_mirrors == True:
+                
+                # flip image and reprocess it
+                roi_flipped = roi_orig.copy()
+                roi_flipped = cv2.flip(roi_flipped, 0)               
 
+                objects_detected_flipped = object_detector.process_frame(roi_flipped)
+
+                (objectflipped_class_ids, objectflipped_confidences, objectflipped_boxes) = object_detector.postprocess_frame(roi_flipped, objects_detected_flipped)
+                for (flipped_class_id, flipped_confidence, flipped_box) in zip(objectflipped_class_ids, objectflipped_confidences, objectflipped_boxes):
+                    if object_detector.label(flipped_class_id) in ('person','backpack'):
+                        print("FOUND PERSON IN LAKE")
+                        #(hh, ww) = roi_flipped.shape[:2]
+                        left = int(float(flipped_box[0]) * scale)
+                        top  = int(float(flipped_box[1]) * scale)
+                        right = int(float(flipped_box[2]) * scale)
+                        bottom = int(float(flipped_box[3]) * scale)
+                        objects.append(((x+left,y+h-bottom),(x+right,y+h-top),flipped_class_id, flipped_confidence))
+                    
+                    
             # show the visualization and current ROI
             #clone_resized = imutils.resize(clone, width=1024)
             #cv2.imshow("Visualization", clone_resized)
@@ -153,7 +179,7 @@ def main(**kwargs):
             #cv2.waitKey(1)
 
             #print("ROI: {} roi: {}".format(roiOrig.shape,roi.shape))
-            
+            print("#")
             cnt += 1
    
     print("#ROIs = {}".format(len(rois)))
