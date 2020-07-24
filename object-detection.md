@@ -20,3 +20,11 @@ Also partially covered persons are detected. Please note: the confidence correla
 
 <img src=https://tawiesn.de/leica/zermatt_persons1.png><br>
 <img src=https://tawiesn.de/leica/zermatt_persons2.png>
+
+### Detect all persons in full resolution image
+
+Use resolution pyramid and sliding window and detect all persons:
+
+<img src=https://tawiesn.de/leica/zermatt_persons5.jpg>
+
+Due to the pyramid approach some persons might be detected several times in differently resolved images. One could do a maximum suppression of the bounding boxes. On the other side, in the end we are just interested in a pixel mask. So we can skip that step.
