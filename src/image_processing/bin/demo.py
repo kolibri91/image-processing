@@ -58,8 +58,12 @@ def sliding_window(image, step, window_size):
     # slide a window across the image
     for y in range(0, image.shape[0] - window_size[1], step):
         for x in range(0, image.shape[1] - window_size[0], step):
-            # yield the current window
             yield (x, y, image[y:y + window_size[1], x:x + window_size[0]])
+        yield(image.shape[1]-window_size[0], y, image[y:y + window_size[1], image.shape[1]-window_size[0]:image.shape[1]])
+
+    for x in range(0, image.shape[1] - window_size[0], step):
+        yield(x, image.shape[0]-window_size[1], image[image.shape[0]-window_size[1]:image.shape[0], x:x + window_size[0]])
+    yield(image.shape[1]-window_size[0], image.shape[0]-window_size[1], image[image.shape[0]-window_size[1]:image.shape[0], image.shape[1]-window_size[0]:image.shape[1]])
 
 def image_pyramid(image, scale=1.5, min_size=(224, 224)):
     # yield the original image
@@ -72,7 +76,7 @@ def image_pyramid(image, scale=1.5, min_size=(224, 224)):
         # if the resized image does not meet the supplied minimum
         # size, then stop constructing the pyramid
         if image.shape[0] < min_size[1] or image.shape[1] < min_size[0]:
-                break
+            break
         # yield the next image in the pyramid
         yield image
 
