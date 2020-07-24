@@ -130,17 +130,10 @@ def main(**kwargs):
             rois.append(roi)
             locs.append((x, y, x + w, y + h))   
             
-
-            # clone the original image and then draw a bounding box
-            # surrounding the current region
-            #clone = image_8bit.copy()
-            #cv2.rectangle(clone, (x, y), (x + w, y + h),
-            #        (0, 255, 0), 8)
             
             check_for_mirrors = False
             
             objects_detected = object_detector.process_frame(roi_orig)
-
             (object_class_ids, object_confidences, object_boxes) = object_detector.postprocess_frame(roi_orig, objects_detected)
 
             for (class_id, confidence, box) in zip(object_class_ids, object_confidences, object_boxes):
@@ -153,18 +146,14 @@ def main(**kwargs):
                     check_for_mirrors = True
                     
             if check_for_mirrors == True:
-                
                 # flip image and reprocess it
                 roi_flipped = roi_orig.copy()
                 roi_flipped = cv2.flip(roi_flipped, 0)               
 
                 objects_detected_flipped = object_detector.process_frame(roi_flipped)
-
                 (objectflipped_class_ids, objectflipped_confidences, objectflipped_boxes) = object_detector.postprocess_frame(roi_flipped, objects_detected_flipped)
                 for (flipped_class_id, flipped_confidence, flipped_box) in zip(objectflipped_class_ids, objectflipped_confidences, objectflipped_boxes):
                     if object_detector.label(flipped_class_id) in ('person','backpack'):
-                        print("FOUND PERSON IN LAKE")
-                        #(hh, ww) = roi_flipped.shape[:2]
                         left = int(float(flipped_box[0]) * scale)
                         top  = int(float(flipped_box[1]) * scale)
                         right = int(float(flipped_box[2]) * scale)
@@ -179,7 +168,6 @@ def main(**kwargs):
             #cv2.waitKey(1)
 
             #print("ROI: {} roi: {}".format(roiOrig.shape,roi.shape))
-            print("#")
             cnt += 1
    
     print("#ROIs = {}".format(len(rois)))
