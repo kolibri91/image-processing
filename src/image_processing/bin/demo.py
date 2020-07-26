@@ -30,15 +30,15 @@ def parse_command_line_args(args):
 
 
 def sliding_window(image, step, window_size):
-    # slide a window across the image
-    for y in range(0, image.shape[0] - window_size[1], step):
-        for x in range(0, image.shape[1] - window_size[0], step):
-            yield (x, y, image[y:y + window_size[1], x:x + window_size[0]])
-        yield(image.shape[1]-window_size[0], y, image[y:y + window_size[1], image.shape[1]-window_size[0]:image.shape[1]])
+    xx = list(range(0, image.shape[1] - window_size[0], step))
+    xx.append(image.shape[1]-window_size[0])
+    yy = list(range(0, image.shape[0] - window_size[1], step))
+    yy.append(image.shape[0]-window_size[1])
 
-    for x in range(0, image.shape[1] - window_size[0], step):
-        yield(x, image.shape[0]-window_size[1], image[image.shape[0]-window_size[1]:image.shape[0], x:x + window_size[0]])
-    yield(image.shape[1]-window_size[0], image.shape[0]-window_size[1], image[image.shape[0]-window_size[1]:image.shape[0], image.shape[1]-window_size[0]:image.shape[1]])
+    # slide a window across the image
+    for y in yy:
+        for x in xx:
+            yield (x, y, image[y:y + window_size[1], x:x + window_size[0]])
 
 
 def image_pyramid(image, scale=1.5, min_size=(224, 224)):
