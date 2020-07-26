@@ -57,6 +57,26 @@ def image_pyramid(image, scale=1.5, min_size=(224, 224)):
         yield image
 
 
+def find_objects_and_return_object_informations(object_detector, frame, scaling_factor):
+    objects_detected = object_detector.process_frame(frame)
+    (object_class_ids, object_confidences, object_boxes) = object_detector.postprocess_frame(frame, objects_detected)
+
+    bounding_boxes = []
+    classes = []
+    confidences = []
+    for (class_id, confidence, box) in zip(object_class_ids, object_confidences, object_boxes):
+        if object_detector.label(class_id) in ('person','backpack'):
+            left = int(float(box[0]) * scaling_factor)
+            top  = int(float(box[1]) * scaling_factor)
+            right = int(float(box[2]) * scaling_factor)
+            bottom = int(float(box[3]) * scaling_factor)
+            bounding_boxes.append((left,top,right,bottom))
+            classes.append(class_id)
+            confidences.append(confidence)
+            
+    return (bounding_boxes, classes, confidences)
+
+
 PYRAMID_SCALE = 2.0
 WIN_STEP = 416 #312
 ROI_SIZE = (1232,1232)
@@ -115,33 +135,22 @@ def main(**kwargs):
             
             check_for_mirrors = False
             
-            objects_detected = object_detector.process_frame(roi_orig)
-            (object_class_ids, object_confidences, object_boxes) = object_detector.postprocess_frame(roi_orig, objects_detected)
-
-            for (class_id, confidence, box) in zip(object_class_ids, object_confidences, object_boxes):
-                if object_detector.label(class_id) in ('person','backpack'):
-                    left = int(float(box[0]) * scale)
-                    top  = int(float(box[1]) * scale)
-                    right = int(float(box[2]) * scale)
-                    bottom = int(float(box[3]) * scale)
-                    objects.append(((x+left,y+top),(x+right,y+bottom),class_id, confidence))
-                    check_for_mirrors = True
+            (bounding_boxes, classes, confidences) =  find_objects_and_return_object_informations(object_detector, roi_orig, scale)
+         
+            for (bb, class_id, confidence) in zip(bounding_boxes, classes, confidences):
+                objects.append(((x+bb[0],y+bb[1]),(x+bb[2],y+bb[3]),class_id, confidence))
+                check_for_mirrors = True
                     
             if check_for_mirrors == True:
                 # flip image and reprocess it
                 roi_flipped = roi_orig.copy()
                 roi_flipped = cv2.flip(roi_flipped, 0)               
 
-                objects_detected_flipped = object_detector.process_frame(roi_flipped)
-                (objectflipped_class_ids, objectflipped_confidences, objectflipped_boxes) = object_detector.postprocess_frame(roi_flipped, objects_detected_flipped)
-                for (flipped_class_id, flipped_confidence, flipped_box) in zip(objectflipped_class_ids, objectflipped_confidences, objectflipped_boxes):
-                    if object_detector.label(flipped_class_id) in ('person','backpack'):
-                        left = int(float(flipped_box[0]) * scale)
-                        top  = int(float(flipped_box[1]) * scale)
-                        right = int(float(flipped_box[2]) * scale)
-                        bottom = int(float(flipped_box[3]) * scale)
-                        objects.append(((x+left,y+h-bottom),(x+right,y+h-top),flipped_class_id, flipped_confidence))
-                    
+                (bounding_boxes, classes, confidences) =  find_objects_and_return_object_informations(object_detector, roi_flipped, scale)
+                for (bb, flipped_class_id, flipped_confidence) in zip(bounding_boxes, classes, confidences):
+                
+                    objects.append(((x+bb[0],y+h-bb[3]),(x+bb[2],y+h-bb[1]),flipped_class_id, flipped_confidence))
+                
                     
             # show the visualization and current ROI
             #clone_resized = imutils.resize(clone, width=1024)
