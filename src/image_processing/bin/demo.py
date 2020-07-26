@@ -3,7 +3,6 @@
 import argparse
 import os
 import sys
-import time
 import imutils
 
 import cv2
@@ -30,30 +29,6 @@ def parse_command_line_args(args):
     return vars(parsed_args)
 
 
-def process_frame(object_detector, image):
-    objects_detected = object_detector.process_frame(image)
-    (object_class_ids, object_confidences, object_boxes) = object_detector.postprocess_frame(image, objects_detected)
-
-    for (class_id, confidence, box) in zip(object_class_ids, object_confidences, object_boxes):
-        if object_detector.label(class_id) in ('person','backpack'):
-            left = box[0]
-            top  = box[1]
-            right = box[2]
-            bottom = box[3]
-            right = int(box[2])
-            bottom = int(box[3])
-            cv2.rectangle(image, (left,top), (right,bottom), (255,178,50),3)
-            label = '%s:%.2f' % (object_detector.label(class_id), confidence)
-            label_size, base_line = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)
-            top = max(top, label_size[1])
-            cv2.rectangle(image, 
-                            (left, top - round(1.5*label_size[1])), 
-                            (left+round(1.5*label_size[0]), top + base_line), 
-                            (255,255,255), cv2.FILLED)
-            cv2.putText(image, label, (left,top), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,0), 1)
-        
-    return image
-
 def sliding_window(image, step, window_size):
     # slide a window across the image
     for y in range(0, image.shape[0] - window_size[1], step):
@@ -64,6 +39,7 @@ def sliding_window(image, step, window_size):
     for x in range(0, image.shape[1] - window_size[0], step):
         yield(x, image.shape[0]-window_size[1], image[image.shape[0]-window_size[1]:image.shape[0], x:x + window_size[0]])
     yield(image.shape[1]-window_size[0], image.shape[0]-window_size[1], image[image.shape[0]-window_size[1]:image.shape[0], image.shape[1]-window_size[0]:image.shape[1]])
+
 
 def image_pyramid(image, scale=1.5, min_size=(224, 224)):
     # yield the original image
@@ -80,10 +56,12 @@ def image_pyramid(image, scale=1.5, min_size=(224, 224)):
         # yield the next image in the pyramid
         yield image
 
+
 PYRAMID_SCALE = 2.0
 WIN_STEP = 416 #312
 ROI_SIZE = (1232,1232)
 INPUT_SIZE = (416,416)
+
 
 def main(**kwargs):
 
@@ -182,36 +160,7 @@ def main(**kwargs):
         print("Object: {} Confidence: {} Box: ({})-({})".format(o[2],o[3],o[0],o[1]))
     
     cv2.imwrite("test.jpg", result)
-    #result_resized = imutils.resize(result, width=1024)
-    #cv2.imshow("Visualization", result_resized)
-    #cv2.waitKey(0)
-            
-    ## detect people mirrored in lake
-    #image_8bit = cv2.flip(image_8bit, 0)
-    #img_part = image_8bit[1730:1730+500, 5340:5340+500].copy()
-    #img_part_detected = process_frame(object_detector, img_part)
-    #plt.imshow(img_part_detected[..., ::-1])
-    #plt.show()
-
-    ## detect people at lake (including the guy behind the hill)
-    #image_8bit = cv2.flip(image_8bit, 0)
-    #img_part = image_8bit[1840:1840+500, 5340:5340+500].copy()
-    #img_part = image_8bit[1620:1840+1232, 5340:5340+1232].copy()
-    #img_part_detected = process_frame(object_detector, img_part)
-    #plt.imshow(img_part_detected[..., ::-1])
-    #plt.show()
-    
-    ## detect guy on the right border of image
-    #img_part = image_8bit[1600:1600+500, 5600:5600+500].copy()
-    #img_part_detected = process_frame(object_detector, img_part)
-    #plt.imshow(img_part_detected[..., ::-1])
-    #plt.show()
-    
-    ## apply detector to full image
-    #img_part = image_8bit.copy()
-    #img_part_detected = process_frame(object_detector, img_part)
-    #plt.imshow(img_part_detected[..., ::-1])
-    #plt.show()
+   
 
 if __name__ == "__main__":
     arguments = sys.argv[1:]
