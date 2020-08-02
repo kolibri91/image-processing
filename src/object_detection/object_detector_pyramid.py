@@ -71,21 +71,20 @@ class ObjectDetectorPyramid:
                     for (bb, flipped_class_id, flipped_confidence) in zip(bounding_boxes, classes, confidences):
                     
                         objects.append((flipped_class_id, flipped_confidence, (x+bb[0],y+h-bb[3],x+bb[2],y+h-bb[1])))
-             #(object_class_ids, object_confidences, object_boxes)       
-                    
-            # show the visualization and current ROI
-            #clone_resized = imutils.resize(clone, width=1024)
-            #cv2.imshow("Visualization", clone_resized)
-            ##cv2.imshow("ROI", roiOrig)
-            #cv2.waitKey(1)
-
-            #print("ROI: {} roi: {}".format(roiOrig.shape,roi.shape))
-
-
-        #objects_detected = self.object_detector.forward(self.__get_object_detector_outputlayer())
-
+            
         return objects
 
+
+    def process_frame_and_generate_mask(self, frame_rgb):
+
+        objects = self.process_frame(frame_rgb)
+   
+        image_height,image_width,image_depth = frame_rgb.shape
+        image_mask = np.zeros((image_height,image_width),dtype = np.uint8)
+        for o in objects:
+            cv2.rectangle(image_mask, (o[2][0],o[2][1]), (o[2][2],o[2][3]), 255, -1)
+        return (image_mask, objects)
+    
 
     def __sliding_window(self, image, step, window_size):
         xx = list(range(0, image.shape[1] - window_size[0], step))

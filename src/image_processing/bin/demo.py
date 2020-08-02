@@ -45,11 +45,8 @@ def main(**kwargs):
     image_8bit = list(map(np.uint8, image)) if image_datatype != np.uint8 else image
 
     object_detector_pyramid = ObjectDetectorPyramid(object_detector)
-    objects = object_detector_pyramid.process_frame(image_8bit)
+    (image_mask,objects) = object_detector_pyramid.process_frame_and_generate_mask(image_8bit)
    
-    image_mask = np.zeros((image_height,image_width),dtype = np.uint8)
-    for o in objects:
-        cv2.rectangle(image_mask, (o[2][0],o[2][1]), (o[2][2],o[2][3]), 255, -1)
     cv2.imwrite("test_mask.png", image_mask)
     
    
